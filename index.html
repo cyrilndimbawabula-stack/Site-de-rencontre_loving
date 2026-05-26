@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Ludo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    * { box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+    color: white;
+  }
+
+  #menu {
+    margin-top: 50px;
+  }
+
+  #menu h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  }
+
+ .mode-btn {
+    display: block;
+    width: 90%;
+    max-width: 350px;
+    margin: 20px auto;
+    padding: 25px;
+    font-size: 22px;
+    font-weight: bold;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+
+.mode-btn:active {
+    transform: scale(0.95);
+  }
+
+.btn-friends {
+    background: linear-gradient(135deg, #00b894, #00cec9);
+    color: white;
+  }
+
+.btn-bot {
+    background: linear-gradient(135deg, #fd79a8, #e84393);
+    color: white;
+  }
+
+  #game {
+    display: none;
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    width: 95vw;
+    max-width: 600px;
+    height: 95vw;
+    max-height: 600px;
+    margin: 15px auto;
+    background: white;
+    border: 3px solid #333;
+  }
+
+.cell {
+    border: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+  }
+
+.home-red { background: #ff6b6b; }
+.home-blue { background: #4dabf7; }
+.home-green { background: #51cf66; }
+.home-yellow { background: #ffd43b; }
+.safe { background: #ffe066; }
+.path { background: #fff; }
+
+.token {
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    border: 2px solid #333;
+    position: absolute;
+    cursor: pointer;
+  }
+
+.red-token { background: #d63031; }
+.blue-token { background: #0984e3; }
+.green-token { background: #00b894; }
+.yellow-token { background: #fdcb6e; }
+
+.token.selected {
+    border: 4px solid white;
+    box-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+
+.game-btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    background: white;
+    color: #333;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 5px;
+    font-weight: bold;
+  }
+
+.game-btn:active { transform: scale(0.95); }
+.game-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  #info { font-size: 18px; margin: 10px; font-weight: bold; }
+  #dice { font-size: 24px; margin: 10px; }
+.turn-red { color: #ff6b6b; }
+.turn-blue { color: #4dabf7; }
+.turn-green { color: #51cf66; }
+.turn-yellow { color: #ffd43b; }
+
+.game-container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+#gameStatus {
+    font-size: 16px;
+    min-height: 30px;
+    color: #ffe066;
+}
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>🎲 LUDO</h1>
+  <p>Choisis ton mode de jeu</p>
+  <button class="mode-btn btn-friends" onclick="startGame('friends')">
+    👥 Jouer avec des amis
+  </button>
+  <button class="mode-btn btn-bot" onclick="startGame('bot')">
+    🤖 Jouer vs Robots
+  </button>
+</div>
+
+<div id="game">
+  <div class="game-container">
+    <h2>🎲 Ludo</h2>
+    <div id="info" class="turn-red">Tour: Rouge</div>
+    <div id="dice">Dé: -</div>
+    <div id="gameStatus"></div>
+    <button class="game-btn" id="rollBtn" onclick="rollDice()">Lancer le dé</button>
+    <button class="game-btn" id="moveBtn" onclick="moveToken()" style="display: none;">Déplacer</button>
+    <button class="game-btn" onclick="backToMenu()">Menu</button>
+    <div id="board"></div>
+  </div>
+</div>
+
+<script>
+let gameMode = 'bot';
+let currentPlayer = 0;
+let diceValue = 0;
+let gameOver = false;
+let diceRolled = false;
+let selectedToken = -1;
+
+const players = ['red', 'blue', 'green', 'yellow'];
+const playerColors = {
+  red: 'red-token',
+  blue: 'blue-token',
+  green: 'green-token',
+  yellow: 'yellow-token'
+};
+
+const playerNames = {
+  red: 'Rouge',
+  blue: 'Bleu',
+  green: 'Vert',
+  yellow: 'Jaune'
+};
+
+let positions = {
+  red: [-1, -1, -1, -1],
+  blue: [-1, -1, -1, -1],
+  green: [-1, -1, -1, -1],
+  yellow: [-1, -1, -1, -1]
+};
+
+const startPos = { red: 0, blue: 13, green: 26, yellow: 39 };
+const pathLength = 52;
+const homeStart = { red: 52, blue: 56, green: 60, yellow: 64 };
+const safeSpots = [0, 8, 13, 21, 26, 34, 39, 47];
+let wins = { red: 0, blue: 0, green: 0, yellow: 0 };
+
+function startGame(mode) {
+  gameMode = mode;
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  resetGame();
+  createBoard();
+  drawTokens();
+}
+
+function resetGame() {
+  currentPlayer = 0;
+  diceValue = 0;
+  gameOver = false;
+  diceRolled = false;
+  selectedToken = -1;
+  positions = {
+    red: [-1, -1, -1, -1],
+    blue: [-1, -1, -1, -1],
+    green: [-1, -1, -1, -1],
+    yellow: [-1, -1, -1, -1]
+  };
+  updateInfo();
+}
+
+function backToMenu() {
+  document.getElementById('menu').style.display = 'block';
+  document.getElementById('game').style.display = 'none';
+}
+
+function createBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for(let i = 0; i < 225; i++) {
+    let cell = document.createElement('div');
+    cell.className = 'cell path';
+    cell.id = 'cell-' + i;
+    cell.onclick = function() { selectCell(i); };
+
+    // Home areas
+    if(i >= 0 && i < 36 && i % 15 < 6 && Math.floor(i/15) < 6) cell.classList.add('home-red');
+    if(i >= 0 && i < 90 && i % 15 >= 9 && Math.floor(i/15) < 6) cell.classList.add('home-blue');
+    if(i >= 135 && i < 225 && i % 15 < 6 && Math.floor(i/15) >= 9) cell.classList.add('home-green');
+    if(i >= 135 && i < 225 && i % 15 >= 9 && Math.floor(i/15) >= 9) cell.classList.add('home-yellow');
+
+    board.appendChild(cell);
+  }
+
+  // Mark safe spots
+  for(let i = 0; i < safeSpots.length; i++) {
+    let pos = getPathPosition(safeSpots[i]);
+    if(pos >= 0) {
+      document.getElementById('cell-' + pos).classList.add('safe');
+    }
+  }
+}
+
+function getPathPosition(step) {
+  // Path around the board
+  if(step === 0) return 6 + 7*15; // Start Red
+  if(step < 8) return 6 + step + 7*15;
+  if(step === 8) return 14 + 7*15; // Safe Red
+  if(step < 13) return 14 + 15 - (step - 8) + 7*15;
+  if(step === 13) return 14*15 + 14; // Safe Blue
+  if(step < 21) return 14*15 - (step - 13)*15 + 14;
+  if(step === 21) return 8*15 + 14; // Safe Green
+  if(step < 26) return 8*15 + 14 - (step - 21);
+  if(step === 26) return 0 + 8; // Safe Yellow
+  if(step < 34) return (step - 26)*15 + 8;
+  if(step === 34) return 7*15 + 0; // Safe Red again
+  if(step < 39) return 7*15 + (step - 34);
+  if(step === 39) return 7*15 + 6; // Back to start area
+  if(step < 47) return 7*15 + 6 + (step - 39)*15;
+  if(step === 47) return 6 + 0*15; // Safe
+  if(step < 52) return 6 + (step - 47);
+  
+  return -1;
+}
+
+function drawTokens() {
+  document.querySelectorAll('.token').forEach(t => t.remove());
+
+  players.forEach(player => {
+    positions[player].forEach((pos, idx) => {
+      if(pos >= 0) {
+        let boardPos = -1;
+        if(pos < pathLength) {
+          boardPos = getPathPosition((pos + startPos[player]) % pathLength);
+        } else {
+          // Home stretch
+          boardPos = getHomePosition(player, pos - pathLength);
+        }
+        
+        if(boardPos >= 0) {
+          let cell = document.getElementById('cell-' + boardPos);
+          if(cell) {
+            let token = document.createElement('div');
+            token.className = 'token ' + playerColors[player];
+            token.dataset.player = player;
+            token.dataset.index = idx;
+            token.onclick = function(e) { selectToken(player, idx); e.stopPropagation(); };
+            cell.appendChild(token);
+          }
+        }
+      }
+    });
+  });
+}
+
+function getHomePosition(player, offset) {
+  // Home stretch positions
+  const homePositions = {
+    red: [6 + 6*15, 6 + 5*15, 6 + 4*15, 6 + 3*15],
+    blue: [14 + 6*15, 14 + 6*15 - 15, 14 + 6*15 - 30, 14 + 6*15 - 45],
+    green: [14 + 8*15, 14 + 9*15, 14 + 10*15, 14 + 11*15],
+    yellow: [0 + 8*15, 0 + 8*15 + 15, 0 + 8*15 + 30, 0 + 8*15 + 45]
+  };
+  return homePositions[player][offset] || -1;
+}
+
+function selectToken(player, idx) {
+  if(players[currentPlayer] !== player) return;
+  selectedToken = idx;
+  drawTokens();
+}
+
+function selectCell(cellIdx) {
+  // For visual feedback
+}
+
+function rollDice() {
+  if(diceRolled || gameOver) return;
+  
+  diceValue = Math.floor(Math.random() * 6) + 1;
+  document.getElementById('dice').textContent = 'Dé: ' + diceValue;
+  diceRolled = true;
+  
+  updateGameStatus(`${playerNames[players[currentPlayer]]} a lancé un ${diceValue}`);
+  
+  // Auto-move for bot
+  if(gameMode === 'bot' && currentPlayer > 0) {
+    setTimeout(botMove, 1000);
+  } else {
+    document.getElementById('moveBtn').style.display = 'inline-block';
+  }
+}
+
+function moveToken() {
+  if(!diceRolled || selectedToken === -1) {
+    updateGameStatus('Sélectionne un pion!');
+    return;
+  }
+  
+  const player = players[currentPlayer];
+  let newPos = positions[player][selectedToken] + diceValue;
+  
+  // Check if can exit home
+  if(positions[player][selectedToken] === -1) {
+    if(diceValue === 6) {
+      positions[player][selectedToken] = 0;
+    } else {
+      updateGameStatus('Besoin d\'un 6 pour sortir!');
+      return;
+    }
+  } else if(newPos >= pathLength) {
+    // Enter home stretch
+    newPos = pathLength + (newPos - pathLength);
+    if(newPos > pathLength + 4) newPos = pathLength + 4; // Can't go past home
+  }
+  
+  positions[player][selectedToken] = newPos;
+  
+  // Check for win
+  if(newPos === pathLength + 4) {
+    wins[player]++;
+    updateGameStatus(`${playerNames[player]} a gagné!`);
+    if(wins[player] === 4) {
+      gameOver = true;
+    }
+  }
+  
+  // Check for capture
+  let captured = false;
+  const tokenPos = getPathPosition((newPos + startPos[player]) % pathLength);
+  if(!safeSpots.includes(newPos) && tokenPos >= 0) {
+    players.forEach(otherPlayer => {
+      if(otherPlayer !== player) {
+        positions[otherPlayer].forEach((pos, idx) => {
+          let otherTokenPos = -1;
+          if(pos >= 0 && pos < pathLength) {
+            otherTokenPos = getPathPosition((pos + startPos[otherPlayer]) % pathLength);
+          }
+          if(otherTokenPos === tokenPos && otherTokenPos >= 0) {
+            positions[otherPlayer][idx] = -1;
+            captured = true;
+          }
+        });
+      }
+    });
+  }
+  
+  selectedToken = -1;
+  document.getElementById('moveBtn').style.display = 'none';
+  
+  // Next turn
+  if(diceValue !== 6 || gameOver) {
+    currentPlayer = (currentPlayer + 1) % 4;
+  }
+  
+  diceRolled = false;
+  document.getElementById('dice').textContent = 'Dé: -';
+  updateInfo();
+  drawTokens();
+  
+  if(gameMode === 'bot' && currentPlayer > 0) {
+    setTimeout(rollDice, 1000);
+  }
+}
+
+function botMove() {
+  const player = players[currentPlayer];
+  let validMoves = [];
+  
+  for(let i = 0; i < 4; i++) {
+    let testPos = positions[player][i];
+    if(testPos === -1 && diceValue === 6) validMoves.push(i);
+    else if(testPos >= 0 && testPos + diceValue <= pathLength + 4) validMoves.push(i);
+  }
+  
+  if(validMoves.length > 0) {
+    selectedToken = validMoves[Math.floor(Math.random() * validMoves.length)];
+    moveToken();
+  } else {
+    currentPlayer = (currentPlayer + 1) % 4;
+    diceRolled = false;
+    document.getElementById('dice').textContent = 'Dé: -';
+    updateInfo();
+  }
+}
+
+function updateInfo() {
+  const player = players[currentPlayer];
+  const colorClass = 'turn-' + player;
+  document.getElementById('info').textContent = `Tour: ${playerNames[player]}`;
+  document.getElementById('info').className = colorClass;
+}
+
+function updateGameStatus(message) {
+  document.getElementById('gameStatus').textContent = message;
+}
+</script>
+</body>
+</html>
