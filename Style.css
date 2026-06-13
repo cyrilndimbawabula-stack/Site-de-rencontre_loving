@@ -1,155 +1,82 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box }
 
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  perspective: 1000px;
-  overflow: hidden;
-}
-
-body::before {
-  content: '';
-  position: absolute;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-  background-size: 50px 50px;
-  animation: moveGrid 20s linear infinite;
-}
-
-@keyframes moveGrid {
- 0% { transform: translate(-50%, -50%) rotateX(60deg); }
- 100% { transform: translate(-50%, -50%) rotateX(60deg) translateY(50px); }
-}
-
-.container {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border-radius: 30px;
-  padding: 40px;
-  max-width: 500px;
-  width: 100%;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
-    0 30px 60px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.3);
-  transform: rotateX(5deg);
-  transition: 0.5s;
-}
-
-.container:hover {
-  transform: rotateX(0deg) translateZ(20px);
-}
-
-h1 {
-  color: #fff;
-  margin-bottom: 25px;
-  font-size: 2.5em;
-  text-shadow: 0 5px 15px rgba(0,0,0,0.5);
-  transform: translateZ(30px);
-}
-
-#info {
-  font-size: 1.3em;
-  font-weight: bold;
-  margin: 20px 0;
-  padding: 15px;
-  border-radius: 15px;
-  background: rgba(255,255,255,0.2);
-  color: white;
-  border: 2px solid rgba(255,255,255,0.3);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  transform: translateZ(20px);
-  transition: 0.3s;
-}
-
-/* Couleurs 3D par joueur */
-.turn-0 { 
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  box-shadow: 0 10px 30px rgba(255,65,108,0.5);
-}
-.turn-1 { 
-  background: linear-gradient(135deg, #2193b0, #6dd5ed);
-  box-shadow: 0 10px 30px rgba(33,147,176,0.5);
-}
-.turn-2 { 
-  background: linear-gradient(135deg, #38ef7d, #11998e);
-  box-shadow: 0 10px 30px rgba(56,239,125,0.5);
-}
-.turn-3 { 
-  background: linear-gradient(135deg, #f7971e, #ffd200);
-  box-shadow: 0 10px 30px rgba(247,151,30,0.5);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #fafafa;
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
   color: #333;
 }
 
-#dice {
-  font-size: 4em;
-  margin: 30px 0;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  transform: translateZ(40px);
-  animation: float 3s ease-in-out infinite;
+h2 {
+  margin: 25px 0 15px;
+  font-size: 22px;
+  color: #ff69b4;
 }
 
-@keyframes float {
- 0%, 100% { transform: translateZ(40px) translateY(0); }
- 50% { transform: translateZ(40px) translateY(-10px); }
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: #ff69b4;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
 }
 
 button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  background: #ff69b4;
   color: white;
   border: none;
-  padding: 18px 50px;
-  font-size: 1.2em;
-  border-radius: 15px;
-  cursor: pointer;
+  border-radius: 10px;
+  font-size: 16px;
   font-weight: bold;
-  border: 3px solid rgba(255,255,255,0.3);
-  box-shadow: 
-    0 15px 35px rgba(102,126,234,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.3);
-  transform: translateZ(25px);
-  transition: all 0.3s;
-}
-
-button:hover {
-  transform: translateZ(35px) scale(1.08);
-  box-shadow: 
-    0 20px 45px rgba(102,126,234,0.7),
-    inset 0 1px 0 rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: 0.2s;
 }
 
 button:active {
-  transform: translateZ(15px) scale(0.98);
+  transform: scale(0.98);
+  background: #e0559e;
 }
 
-#gameStatus {
-  margin-top: 20px;
-  color: rgba(255,255,255,0.8);
-  font-style: italic;
-  transform: translateZ(15px);
+.card {
+  background: white;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 15px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
 }
 
-#board {
-  margin-top: 25px;
-  min-height: 300px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 20px;
-  border: 2px solid rgba(255,255,255,0.1);
-  box-shadow: inset 0 10px 30px rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: rgba(255,255,255,0.5);
-  transform: translateZ(10px);
-  }
+.card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  color: #ff69b4;
+  font-size: 20px;
+  margin: 8px 0;
+}
+
+.card p {
+  color: #666;
+  line-height: 1.5;
+}
